@@ -4,7 +4,7 @@ import copy
 from graph import Graph, Node
 
 
-def generate_subgraph(graph: Graph, max_splits: int = 1) -> Graph:
+def generate_subgraph(graph: Graph, max_splits: int = 4) -> Graph:
     """
     Split each node of the graph in up to `max_splits` nodes per node, and return the resulting graph. 
     """
