@@ -1,15 +1,15 @@
 from graph import Graph
-from ops import generate_subgraph
+from ops import subgraph
 
-from node_editor import graph as shared_graph
+from node_editor import graph
 from solvers.example import ExampleSolver
 
 
 def main():
-    subgraph1: Graph = generate_subgraph(shared_graph)
-    subgraph2: Graph = generate_subgraph(shared_graph)
+    subgraph1: Graph = subgraph(graph)
+    subgraph2: Graph = subgraph(graph)
 
-    print(shared_graph == ExampleSolver().solve(subgraph1, subgraph2))
+    print(graph == ExampleSolver().solve(subgraph1, subgraph2))
 
 
 if __name__ == '__main__':

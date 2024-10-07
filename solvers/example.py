@@ -1,4 +1,4 @@
-from graph import Graph
+from graph import Graph, Node
 from . import SharedGraphSolver
 
 

@@ -87,7 +87,14 @@ class Graph:
             visited.add(node)
             stack += [n for n in node.children if n not in visited]
         
-        return visited.keys
+        return visited
+    
+    def unique_indexes(self) -> None:
+        global node_index
+
+        for node in self.get_nodes():
+            node.uuid = str(node_index)
+            node_index += 1
     
     @staticmethod
     def from_rules(rules: list):
