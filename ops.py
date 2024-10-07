@@ -8,7 +8,7 @@ def exclusive_subgraphs(graph: Graph, max_splits: int = 10) -> list:
     """
     Split each node of the graph in up to `max_splits` nodes per node, and return the resulting derived graphs A and B.
     Node splitting is exclusive between the nodes of the derived graphs A and B. 
-    This means that each splitted node can only be applied to 1 node between graph A and B, and the other will stay untouched. 
+    This means that each splitted node can only be applied to 1 node between graph A and B, and the other will remain untouched. 
     """
     graph_a: Graph = copy.deepcopy(graph)
     graph_b: Graph = copy.deepcopy(graph)
@@ -48,5 +48,5 @@ def split_node(node: Node, max_splits, allow_interconnectivity=False) -> list:
         for child in node.children:
             split.add_child(child)
 
-    node.remove()
+    node.remove(keep_self=True)
     return splits

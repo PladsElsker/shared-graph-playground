@@ -37,7 +37,7 @@ class Node:
         self.children.append(node)
         node.parents.append(self)
     
-    def remove(self) -> None:
+    def remove(self, keep_self=False) -> None:
         for parent in self.parents:
             try:
                 parent.children.remove(self)
@@ -48,6 +48,9 @@ class Node:
                 child.parents.remove(self)
             except ValueError:
                 pass
+        if not keep_self:
+            self.parents = []
+            self.children = []
 
 
 @dataclass
