@@ -1,4 +1,4 @@
-# "Shared Graph" Reconstruction
+# Shared Graph Reconstruction Playground
 
 ## Overview
 Exploring the idea of reconstructing an original graph `G` from two graphs `A` and `B` derived by a "node-split" operation.  
