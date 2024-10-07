@@ -16,9 +16,9 @@ ARROW_COLOR = (255, 0, 0)  # Arrow color for visibility
 ARROW_OUTLINE_COLOR = (0, 0, 0)  # Outline color for arrows
 DIRECTION_CIRCLE_COLOR = (0, 0, 0)  # Color of the direction circle
 FPS = 60
-ARROW_SIZE = 10  # Size of the arrowhead
+ARROW_SIZE = 40  # Size of the arrowhead
 LINE_WIDTH = 4  # Thicker line for edges
-DIRECTION_CIRCLE_RADIUS = 5  # Radius of the direction circle
+DIRECTION_CIRCLE_RADIUS = 1  # Radius of the direction circle
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Tree Editor with Cubic Bezier Curves")
@@ -155,7 +155,7 @@ class TreeEditor:
                 'position': node.pos,
                 'children': [child.node_id for child in node.children]
             }
-        with open('tree_structure.json', 'w') as f:
+        with open('node_editor/tree_structure.json', 'w') as f:
             json.dump(tree_data, f, indent=4)
         print("Tree structure exported to tree_structure.json")
 
