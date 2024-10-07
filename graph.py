@@ -68,12 +68,10 @@ class Graph:
             return False
 
         node1_id = id(node1)
-
         if node1_id in visited:
             return True
         
         visited.add(node1_id)
-
         for child1 in node1.children:
             if not any(self._are_equal(child1, child2, visited) for child2 in node2.children):
                 return False
