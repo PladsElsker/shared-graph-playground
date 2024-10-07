@@ -57,64 +57,67 @@ class Graph:
     def __eq__(self, other: 'Graph') -> bool:
         if not isinstance(other, Graph):
             return False
-        
+
         return self._are_equal(self.root, other.root, set())
 
     def _are_equal(self, node1: Node, node2: Node, visited: set) -> bool:
         if not isinstance(node1, Node) or not isinstance(node2, Node):
             return False
-        
+
         if len(node1.children) != len(node2.children):
             return False
 
         node1_id = id(node1)
         if node1_id in visited:
             return True
-        
+
         visited.add(node1_id)
         for child1 in node1.children:
             if not any(self._are_equal(child1, child2, visited) for child2 in node2.children):
                 return False
-        
+
         return True
 
     def get_nodes(self) -> list:
         stack: list[Node] = [self.root]
         visited: set[Node] = set()
+        result: list[Node] = []
 
         while stack:
             node = stack.pop()
+            if node not in visited:
+                result.append(node)
+            
             visited.add(node)
             stack += [n for n in node.children if n not in visited]
-        
-        return visited
-    
+
+        return result
+
     def unique_indexes(self) -> None:
         global node_index
 
         for node in self.get_nodes():
             node.uuid = str(node_index)
             node_index += 1
-    
+
     @staticmethod
     def from_rules(rules: list):
-        nodes = []
+        nodes = {}
         for rule in rules:
             node = Node()
             node.uuid = str(rule.id)
-            nodes.append(node)
+            nodes[str(rule.id)] = node
 
-        valid_root_ids = list(range(len(nodes)))
-        for rule, node in zip(rules, nodes):
+        valid_root_ids = list(nodes.keys())
+        for rule, (k, node) in zip(rules, nodes.items()):
             for child_id in rule.children:
-                child_id = int(child_id)
-                node.add_child(next((n for n in nodes if int(n.uuid) == child_id)))
+                node.add_child(nodes[f'{child_id}'])
                 try:
-                    valid_root_ids.remove(child_id)
+                    valid_root_ids.remove(str(child_id))
                 except (ValueError, AttributeError):
                     pass
-        
+
         if valid_root_ids:
             return Graph(nodes[valid_root_ids[0]])
-        
+
         return None

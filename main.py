@@ -1,14 +1,12 @@
 from graph import Graph
-from ops import subgraph
+from ops import exclusive_subgraphs
 
 from node_editor import graph
 from solvers.example import ExampleSolver
 
 
 def main():
-    subgraph1: Graph = subgraph(graph)
-    subgraph2: Graph = subgraph(graph)
-
+    subgraph1, subgraph2 = exclusive_subgraphs(graph)
     print(graph == ExampleSolver().solve(subgraph1, subgraph2))
 
 
