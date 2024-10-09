@@ -19,8 +19,8 @@ class Node:
     def __init__(self) -> None:
         global node_index
 
-        self.children = []
-        self.parents = []
+        self.children = set()
+        self.parents = set()
         self.uuid = str(node_index)
         node_index += 1
 
@@ -34,8 +34,20 @@ class Node:
         return self.uuid
 
     def add_child(self, node) -> None:
-        self.children.append(node)
-        node.parents.append(self)
+        node.parents.add(self)
+        self.children.add(node)
+
+    def add_parent(self, node) -> None:
+        node.children.add(self)
+        self.parents.add(node)
+
+    def remove_child(self, node) -> None:
+        node.parents.remove(self)
+        self.children.remove(node)
+
+    def remove_parent(self, node) -> None:
+        node.children.remove(self)
+        self.parents.remove(node)
     
     def remove(self, keep_self=False) -> None:
         for parent in self.parents:
@@ -102,6 +114,27 @@ class Graph:
         for node in self.get_nodes():
             node.uuid = str(node_index)
             node_index += 1
+    
+    def reverse_connections(self) -> None:
+        roots = []
+        node_map = {node: Node() for node in self.get_nodes()}
+        for node, rvrs in node_map.items():
+            for child in node.children:
+                rvrs.add_parent(node_map[child])
+            for parent in node.parents:
+                rvrs.add_child(node_map[parent])
+            
+            if not rvrs.parents:
+                roots.append(rvrs)
+        
+        if len(roots) == 1:
+            return Graph(roots[0])
+        
+        reversed = Graph(Node())
+        for root in roots:
+            reversed.root.add_child(root)
+
+        return reversed
 
     @staticmethod
     def from_rules(rules: list):
