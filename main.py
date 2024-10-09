@@ -1,6 +1,7 @@
 import torch
 
 from ops.torch import computation_graph
+from node_editor import load_graph_json
 
 
 class SimpleModel(torch.nn.Module):
@@ -43,7 +44,11 @@ def main():
     input = torch.randn(5, input_dim)
 
     graph = computation_graph(model, input)
-    print(graph.root)
+
+    json_data = graph.serialize()
+    with open('graph/render/graphData.json', 'w') as graph_file:
+        graph_file.write(json_data)
+
 
 if __name__ == '__main__':
     main()

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import json
 
 
 @dataclass
@@ -157,3 +158,14 @@ class Graph:
             return Graph(nodes[valid_root_ids[0]])
 
         return None
+
+    def serialize(self):
+        nodes = self.get_nodes()
+        return json.dumps([
+            {
+                'uuid': node.uuid,
+                'children': [n.uuid for n in node.children],
+                'parents': [n.uuid for n in node.parents],
+            }
+            for node in nodes
+        ])

@@ -1,4 +1,3 @@
-import torch
 from dataclasses import dataclass
 from typing import Optional
 
@@ -7,7 +6,7 @@ from . import Node
 
 @dataclass
 class ComputationNode(Node):
-    operation: Optional[str] = None
+    operation: str
     meta: Optional[object] = None
 
     def __init__(self):
