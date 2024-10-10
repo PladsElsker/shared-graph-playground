@@ -10,11 +10,6 @@ def computation_graph(model: torch.nn.Module, example_input: torch.Tensor) -> Gr
             return
 
         node = ComputationNode(hijacker.target_method_name)
-
-        print(node.operation)
-
-        pass
-
         for input in inputs:
             if not hasattr(input, '__producer_node'):
                 input.__producer_node = ComputationNode()
