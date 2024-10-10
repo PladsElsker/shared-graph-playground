@@ -33,6 +33,13 @@ class Node:
 
     def __repr__(self) -> str:
         return self.uuid
+    
+    def serialize(self) -> str:
+        return json.dumps({
+            'uuid': self.uuid,
+            'children': [n.uuid for n in self.children],
+            'parents': [n.uuid for n in self.parents],
+        })
 
     def add_child(self, node) -> None:
         node.parents.add(self)
@@ -94,6 +101,13 @@ class Graph:
 
         return True
 
+    def serialize(self):
+        nodes = self.get_nodes()
+        return json.dumps([
+            json.loads(node.serialize())
+            for node in nodes
+        ])
+
     def get_nodes(self) -> list:
         stack: list[Node] = [self.root]
         visited: set[Node] = set()
@@ -118,12 +132,29 @@ class Graph:
     
     def reverse_connections(self) -> None:
         roots = []
-        node_map = {node: Node() for node in self.get_nodes()}
+        NodeType = None
+        node_map = {node: type(node)() for node in self.get_nodes()}
         for node, rvrs in node_map.items():
+            for key, value in node.__dict__.items():
+                if key in Node.__annotations__:
+                    continue
+
+                rvrs.__dict__[key] = value
+
+        for node, rvrs in node_map.items():
+            if NodeType is None:
+                NodeType = type(node)
+            
             for child in node.children:
-                rvrs.add_parent(node_map[child])
+                try:
+                    rvrs.add_parent(node_map[child])
+                except:
+                    pass
             for parent in node.parents:
-                rvrs.add_child(node_map[parent])
+                try:
+                    rvrs.add_child(node_map[parent])
+                except:
+                    pass
             
             if not rvrs.parents:
                 roots.append(rvrs)
@@ -131,7 +162,7 @@ class Graph:
         if len(roots) == 1:
             return Graph(roots[0])
         
-        reversed = Graph(Node())
+        reversed = Graph(NodeType())
         for root in roots:
             reversed.root.add_child(root)
 
@@ -158,14 +189,3 @@ class Graph:
             return Graph(nodes[valid_root_ids[0]])
 
         return None
-
-    def serialize(self):
-        nodes = self.get_nodes()
-        return json.dumps([
-            {
-                'uuid': node.uuid,
-                'children': [n.uuid for n in node.children],
-                'parents': [n.uuid for n in node.parents],
-            }
-            for node in nodes
-        ])

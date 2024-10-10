@@ -1,7 +1,7 @@
 import torch
 
 from ops.torch import computation_graph
-from node_editor import load_graph_json
+from models.spectral_ar_vit import ArSpectralDiffusionTransformer
 
 
 class SimpleModel(torch.nn.Module):
@@ -11,7 +11,8 @@ class SimpleModel(torch.nn.Module):
         self.fc2 = torch.nn.Linear(3, 2)
 
     def forward(self, x):
-        x = torch.relu(self.fc1(x))
+        x = self.fc1(x)
+        x = torch.relu(x)
         x = self.fc2(x)
         return x
 
@@ -36,12 +37,18 @@ class ThreeOperationModel(torch.nn.Module):
 
 
 def main():
+    """"
     input_dim = 10
     hidden_dim = 16
     output_dim = 5
-    model = ThreeOperationModel(input_dim=input_dim, hidden_dim=hidden_dim, output_dim=output_dim)
-
     input = torch.randn(5, input_dim)
+    model = ThreeOperationModel(input_dim=input_dim, hidden_dim=hidden_dim, output_dim=output_dim)
+    input = torch.randn(5, 4)
+    model = SimpleModel()
+    """
+    
+    input = torch.rand(1, 32, 17, 4).to(torch.complex64)
+    model = ArSpectralDiffusionTransformer()
 
     graph = computation_graph(model, input)
 
