@@ -48,7 +48,7 @@ def main():
     """
     
     input = torch.rand(1, 32, 17, 4).to(torch.complex64)
-    model = ArSpectralDiffusionTransformer()
+    model = ArSpectralDiffusionTransformer(blocks=2)
 
     graph = computation_graph(model, input)
 

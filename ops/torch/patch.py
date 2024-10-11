@@ -5,9 +5,6 @@ import types
 
 
 EXCLUDED_METHOD_NAMES = {
-    'hasattr', 
-    'delattr', 
-    'getattr',
     'isinstance', 
     'issubclass', 
     'setattr', 
@@ -76,12 +73,20 @@ class TensorPatcher:
         for hijacker in self.hijackers:
             def patch(*args, _hijacker, **kwargs):
                 input_tensors = self._extract_tensors(args, kwargs)
-                result = _hijacker.original_func(*args, **kwargs)
+                if type(_hijacker.original_func) == type(int.real):
+                    result = _hijacker.original_func.__get__(args[0])
+                else:
+                    result = _hijacker.original_func(*args, **kwargs)
                 output_tensors = self._extract_tensors_from_result(result)
                 callback(_hijacker, input_tensors, output_tensors)
                 return result
-        
-            hijacker.hijack(functools.partial(patch, _hijacker=hijacker))
+
+            if type(getattr(hijacker.target_object, hijacker.target_method_name)) == type(int.real):
+                hijacker.hijack(property(functools.partial(patch, _hijacker=hijacker)))
+            elif inspect.isclass(hijacker.target_object):
+                hijacker.hijack(functools.partialmethod(patch, _hijacker=hijacker))
+            else:
+                hijacker.hijack(functools.partial(patch, _hijacker=hijacker))
 
     def clear_callback(self):
         """Remove a previously added callback."""
@@ -102,7 +107,7 @@ class TensorPatcher:
             for name in dir(hijackable):
                 if (name.startswith('__') or name.startswith('_') or name.endswith('_')) and name not in ALLOWED_OPERATORS:
                     continue
-                
+
                 try:
                     value = getattr(hijackable, name, None)
                 except Exception:
@@ -110,8 +115,11 @@ class TensorPatcher:
                 
                 if value is None:
                     continue
+                
+                if isinstance(value, type(int.real)) and hijackable == torch.Tensor:
+                    pass
 
-                if not callable(value):
+                if not callable(value) and not isinstance(value, type(int.real)):
                     continue
 
                 if isinstance(value, types.ModuleType):
@@ -124,7 +132,7 @@ class TensorPatcher:
                 if inspect.isclass(value):
                     continue
 
-                hijacker = FunctionHijacker(hijackable, name, requires_self=inspect.isclass(hijackable))
+                hijacker = FunctionHijacker(hijackable, name)
                 if not hijacker.validate_hijackability():
                     continue
                 
@@ -191,10 +199,7 @@ class FunctionHijacker:
         self.original_func = None
 
     def hijack(self, new_func):
-        if self.requires_self:
-            self.new_func = lambda *args, **kwargs: functools.partial(new_func, args[0])(*args[1:], **kwargs)
-        else:
-            self.new_func = new_func
+        self.new_func = new_func
         self.original_func = getattr(self.target_object, self.target_method_name)
         setattr(self.target_object, self.target_method_name, self.new_func)
 

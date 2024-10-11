@@ -2,6 +2,7 @@ import torch
 from graph import Graph
 from graph.torch import ComputationNode
 from .patch import TensorPatcher
+import inspect
 
 
 def computation_graph(model: torch.nn.Module, example_input: torch.Tensor) -> Graph:
@@ -9,7 +10,12 @@ def computation_graph(model: torch.nn.Module, example_input: torch.Tensor) -> Gr
         if not outputs:
             return
 
-        node = ComputationNode(hijacker.target_method_name)
+        print(hijacker.target_method_name)
+        name = hijacker.target_method_name
+        if inspect.isclass(hijacker.target_object) and hijacker.target_method_name in ['forward']:
+            name = hijacker.target_object.__name__ + '.' + hijacker.target_method_name
+
+        node = ComputationNode(name)
         for input in inputs:
             if not hasattr(input, '__producer_node'):
                 input.__producer_node = ComputationNode()
