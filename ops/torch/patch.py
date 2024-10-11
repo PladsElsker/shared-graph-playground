@@ -115,9 +115,6 @@ class TensorPatcher:
                 
                 if value is None:
                     continue
-                
-                if isinstance(value, type(int.real)) and hijackable == torch.Tensor:
-                    pass
 
                 if not callable(value) and not isinstance(value, type(int.real)):
                     continue
