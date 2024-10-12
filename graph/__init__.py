@@ -115,36 +115,79 @@ class Graph:
 
         while stack:
             node = stack.pop()
-            if node not in visited:
+            if node in visited:
+                continue
+            else:
                 result.append(node)
             
             visited.add(node)
-            stack += [n for n in node.children if n not in visited]
+            stack = [n for n in node.children if n not in visited] + stack
+            stack = [n for n in node.parents if n not in visited] + stack
 
         return result
+    
+    def regular_2(self):
+        node_map = self.copy_map()
+        reverse_map = {
+            v: k
+            for k, v in node_map.items()
+        }
 
-    def unique_indexes(self) -> None:
+        for node in node_map.values():
+            if len(node.parents) == 1 and len(next(iter(node.parents)).children) == 1:
+                parent = next(iter(node.parents))
+                chilren = node.children
+                for child in chilren:
+                    child.add_parent(parent)
+                
+                orig = reverse_map[node]
+                node_map[orig] = parent
+                node.remove(keep_self=True)
+            
+            elif len(node.children) == 1 and len(next(iter(node.children)).parents) == 1:
+                child = next(iter(node.children))
+                parents = node.parents
+                for parent in parents:
+                    parent.add_child(child)
+                
+                orig = reverse_map[node]
+                node_map[orig] = child
+                node.remove(keep_self=True)
+
+        return Graph(node_map[self.root])
+    
+    def unique_indexes(self):
         global node_index
 
         for node in self.get_nodes():
             node.uuid = str(node_index)
             node_index += 1
-    
-    def reverse_connections(self) -> None:
-        roots = []
-        NodeType = None
-        node_map = {node: type(node)() for node in self.get_nodes()}
-        for node, rvrs in node_map.items():
+
+    def copy_map(self, keep_connections=True, node_type=None):
+        node_map = {node: (node_type if node_type else type(node))() for node in self.get_nodes()}
+        for node, copy in node_map.items():
             for key, value in node.__dict__.items():
                 if key in Node.__annotations__:
                     continue
 
-                rvrs.__dict__[key] = value
+                copy.__dict__[key] = value
+
+            if keep_connections:
+                for child in node.children:
+                    twin = node_map[child]
+                    copy.add_child(twin)
+
+                for parent in node.parents:
+                    twin = node_map[parent]
+                    copy.add_parent(twin)
+        
+        return node_map
+
+    def reverse_connections(self):
+        roots = []
+        node_map = self.copy_map(keep_connections=False)
 
         for node, rvrs in node_map.items():
-            if NodeType is None:
-                NodeType = type(node)
-            
             for child in node.children:
                 try:
                     rvrs.add_parent(node_map[child])
@@ -162,7 +205,7 @@ class Graph:
         if len(roots) == 1:
             return Graph(roots[0])
         
-        reversed = Graph(NodeType())
+        reversed = Graph(Node())
         for root in roots:
             reversed.root.add_child(root)
 
@@ -189,3 +232,13 @@ class Graph:
             return Graph(nodes[valid_root_ids[0]])
 
         return None
+
+
+@dataclass
+class NodeMapping:
+    left: set[Node]
+    right: set[Node]
+
+    def __init__(self):
+        self.left = set()
+        self.right = set()

@@ -1,34 +1,31 @@
 import torch
 from graph import Graph
 from graph.torch import ComputationNode
-from .patch import TensorPatcher
-import inspect
 
 
-def computation_graph(model: torch.nn.Module, example_input: torch.Tensor) -> Graph:
-    def hook_dataflow(hijacker, inputs, outputs):
-        if not outputs:
-            return
+def computation_graph(output_tensor: torch.Tensor) -> Graph:
+    leaf = ComputationNode('leaf')
+    last_root = None
+    visited = {output_tensor.grad_fn: leaf}
+    stack = [(output_tensor.grad_fn, leaf)]
 
-        name = hijacker.target_method_name
-        if inspect.isclass(hijacker.target_object) and hijacker.target_method_name in ['forward']:
-            name = hijacker.target_object.__name__ + '.' + hijacker.target_method_name
+    while stack:
+        fn, node = stack.pop()
 
-        node = ComputationNode(name)
-        for input in inputs:
-            if not hasattr(input, '__producer_node'):
-                input.__producer_node = ComputationNode()
-            
-            node.add_child(input.__producer_node)
-        
-        for output in outputs:
-            output.__producer_node = node
+        for parent_fn, _ in fn.next_functions:
+            if parent_fn is None:
+                continue
 
-    model.eval()
-    example_input.__producer_node = ComputationNode('root')
-    with torch.no_grad():
-        with TensorPatcher(hook_dataflow):
-            output = model(example_input)
-            leaf = output.__producer_node
-    
-    return Graph(leaf)
+            if parent_fn in visited:
+                visited[parent_fn].add_child(node)
+                last_root = visited[parent_fn]
+            else:
+                parent = ComputationNode(parent_fn.name())
+                last_root = parent
+                visited[fn] = node
+                parent.add_child(node)
+                stack.append((parent_fn, parent))
+
+    root = ComputationNode('root')
+    root.add_child(last_root)
+    return Graph(root=root)

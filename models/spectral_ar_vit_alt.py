@@ -234,8 +234,7 @@ class SpectralLayerNorm(torch.nn.Module):
             torch.view_as_real(x).reshape(b * s, d, 2)
         ) / (d - 1)
 
-        inter = [self.eps] * 2
-        eigen_vals, eigen_vecs = torch.linalg.eigh(var + torch.diag(torch.tensor(inter, device=x.device)))
+        eigen_vals, eigen_vecs = torch.linalg.eigh(var + torch.diag(torch.tensor([self.eps] * 2, device=x.device)))
         eigen_vals = 1 / torch.sqrt(eigen_vals)
         std_inv = torch.bmm(torch.bmm(eigen_vecs, torch.diag_embed(eigen_vals)), torch.linalg.inv(eigen_vecs))
 
@@ -251,9 +250,7 @@ class SpectralMultiheadAttention(torch.nn.Module):
         self.head_dim = hidden_dim // heads
         assert self.head_dim * heads == hidden_dim, "hidden_dim must be divisible by the number of heads"
 
-        self.to_q = torch.nn.Linear(hidden_dim, hidden_dim, dtype=torch.complex64)
-        self.to_k = torch.nn.Linear(hidden_dim, hidden_dim, dtype=torch.complex64)
-        self.to_v = torch.nn.Linear(hidden_dim, hidden_dim, dtype=torch.complex64)
+        self.to_qkv = torch.nn.Linear(hidden_dim * 3, hidden_dim, dtype=torch.complex64)
         self.dropout = SpectralDropout(dropout)
         self.to_out = torch.nn.Linear(hidden_dim, hidden_dim, dtype=torch.complex64)
 
@@ -265,9 +262,11 @@ class SpectralMultiheadAttention(torch.nn.Module):
 
     def forward(self, x, mask=None, padding=None):
         b, s, d = x.shape
-        query = self.to_q(x).view(b, s, self.heads, self.head_dim).permute(0, 2, 1, 3).reshape(b * self.heads, s, self.head_dim)
-        key = self.to_k(x).view(b, s, self.heads, self.head_dim).permute(0, 2, 1, 3).reshape(b * self.heads, s, self.head_dim)
-        value = self.to_v(x).view(b, s, self.heads, self.head_dim).permute(0, 2, 1, 3).reshape(b * self.heads, s, self.head_dim)
+        qkv_singular_size = self.to_qkv.weight.shape[1] // 3
+        qkv = [self.to_qkv.weight[:, i*qkv_singular_size:(i+1)*qkv_singular_size] for i in range(3)]
+        query = (x @ qkv[0]).view(b, s, self.heads, self.head_dim).permute(0, 2, 1, 3).reshape(b * self.heads, s, self.head_dim)
+        key = (x @ qkv[1]).view(b, s, self.heads, self.head_dim).permute(0, 2, 1, 3).reshape(b * self.heads, s, self.head_dim)
+        value = (x @ qkv[2]).view(b, s, self.heads, self.head_dim).permute(0, 2, 1, 3).reshape(b * self.heads, s, self.head_dim)
         attn = torch.bmm(query, key.conj().transpose(-1, -2)) / self.scale
         if mask is not None:
             attn = attn + mask

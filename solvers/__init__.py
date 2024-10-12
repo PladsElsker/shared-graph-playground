@@ -1,11 +1,9 @@
-from graph import Graph, Node
+from graph import Graph, NodeMapping
 
 
 class SharedGraphSolver:
     """
-    Base class for implementing shared graph solvers. 
-    Both graph1 and graph2 have been derived from a single original graph through the node-split operation. 
-    You must find back the original graph connections. 
+    Base class for implementing solvers. 
     """
-    def solve(self, graph1: Graph, graph2: Graph) -> Graph:
+    def solve(self, graph1: Graph, graph2: Graph) -> set[NodeMapping]:
         raise NotImplementedError()
